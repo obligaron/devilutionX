@@ -15,38 +15,57 @@
 namespace devilution {
 
 namespace {
-std::unique_ptr<MainLoopHandler> Handler;
-
-std::vector<std::function<std::unique_ptr<MainLoopHandler>()>> HandlerFactories;
-std::vector<std::function<std::unique_ptr<MainLoopHandler>()>> HandlersBeingCreated;
+std::vector<std::unique_ptr<MainLoopHandler>> Handlers;
+MainLoopHandler *pLastActiveHandler = nullptr;
 
 std::function<void(int status)> QuitFn;
 int QuitStatus;
+
+bool CheckIfHandlerIsClosed(MainLoopHandler *pHandler)
+{
+	if (!pHandler->IsClosed())
+		return false;
+	pHandler->Deactivated();
+	Handlers.erase(std::find_if(Handlers.begin(), Handlers.end(), [&](const std::unique_ptr<MainLoopHandler> &handler) {
+		return handler.get() == pHandler;
+	}));
+	return true;
+}
 
 // Runs an iteration of the main loop.
 // Return true if the loop should continue.
 bool RunMainLoopIteration()
 {
-	if (Handler == nullptr) {
+	if (Handlers.empty()) {
 		QuitFn(QuitStatus);
 		return false;
 	}
+	size_t handlerIndex = Handlers.size() - 1;
+	auto *pHandler = Handlers.at(handlerIndex).get();
+
+	if (pHandler != pLastActiveHandler) {
+		pHandler->Activated();
+		pLastActiveHandler = pHandler;
+	}
+
 	SDL_Event event;
 	while (SDL_PollEvent(&event) != 0) {
-		if (event.type == SDL_QUIT)
-			Handler = nullptr;
-		if (Handler == nullptr) {
+		if (event.type == SDL_QUIT) {
+			Handlers.clear();
+			pHandler = nullptr;
+		}
+		if (pHandler == nullptr) {
 			QuitFn(QuitStatus);
 			return false;
 		}
-		Handler->HandleEvent(event);
-		if (Handler == nullptr) {
-			QuitFn(QuitStatus);
-			return false;
-		}
+		pHandler->HandleEvent(event);
+		if (CheckIfHandlerIsClosed(pHandler))
+			return true;
 	}
-	Handler->Render();
-	if (Handler == nullptr) {
+	pHandler->Render();
+	if (CheckIfHandlerIsClosed(pHandler))
+		return true;
+	if (pHandler == nullptr) {
 		QuitFn(QuitStatus);
 		return false;
 	}
@@ -70,14 +89,14 @@ void SetMainLoopQuitFn(std::function<void(int status)> fn)
 void MainLoopQuit(int status)
 {
 	QuitStatus = status;
-	if (Handler == nullptr) {
+	//if (Handler == nullptr) {
 		QuitFn(QuitStatus);
-	} else {
-		Handler = nullptr;
-	}
+	//} else {
+		//Handler = nullptr;
+	//}
 }
 
-void SetMainLoopHandler(std::unique_ptr<MainLoopHandler> handler)
+void AddMainLoopHandler(std::unique_ptr<MainLoopHandler> handler)
 {
 #ifdef DEBUG_MAIN_LOOP
 	if (Handler == nullptr) {
@@ -87,54 +106,16 @@ void SetMainLoopHandler(std::unique_ptr<MainLoopHandler> handler)
 	}
 #endif
 
-	Handler = nullptr;
-	Handler = std::move(handler);
-
-	if (!HandlersBeingCreated.empty()) {
-#ifdef DEBUG_MAIN_LOOP
-		Log("[MAIN_LOOP]  Skipped handler because its constructor called SetMainLoopHandler: {}", typeid(HandlersBeingCreated.back()).name());
-#endif
-		HandlersBeingCreated.pop_back();
-	}
-}
-
-void AddNextMainLoopHandler(std::function<std::unique_ptr<MainLoopHandler>()> factory)
-{
-	HandlerFactories.push_back(std::move(factory));
-}
-
-void AddMainLoopHandlers(std::initializer_list<std::function<std::unique_ptr<MainLoopHandler>()>> factories)
-{
-	for (auto it = std::rbegin(factories); it != std::rend(factories); ++it) {
-		HandlerFactories.push_back(*it);
-	}
-	NextMainLoopHandler();
-}
-
-void NextMainLoopHandler()
-{
-	if (!HandlersBeingCreated.empty()) {
-#ifdef DEBUG_MAIN_LOOP
-		Log("[MAIN_LOOP]  Skipped handler because its constructor called NextMainLoopHandler: {}", typeid(HandlersBeingCreated.back()).name());
-#endif
-		HandlersBeingCreated.pop_back();
-	}
-	if (HandlerFactories.empty()) {
-		Handler = nullptr;
-		return;
+	if (!Handlers.empty()) {
+		size_t handlerIndex = Handlers.size() - 1;
+		auto *Handler = Handlers.at(handlerIndex).get();
+		if (pLastActiveHandler != nullptr) {
+			pLastActiveHandler->Deactivated();
+			pLastActiveHandler = nullptr;
+		}
 	}
 
-	HandlersBeingCreated.push_back(std::move(HandlerFactories.back()));
-	HandlerFactories.pop_back();
-
-	// The handler's constructor is itself allowed to call `NextMainLoopHandler()`,
-	// so we store the result to a global.
-	// This way `handler` is always from the most recent call.
-	Handler = nullptr;
-	auto handler = HandlersBeingCreated.back()();
-	if (!HandlersBeingCreated.empty()) {
-		SetMainLoopHandler(std::move(handler));
-	}
+	Handlers.push_back(std::move(handler));
 }
 
 void RunMainLoop()

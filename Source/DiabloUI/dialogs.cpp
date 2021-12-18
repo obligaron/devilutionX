@@ -24,7 +24,7 @@ bool InDialog = false;
 
 void DialogActionOK()
 {
-	NextMainLoopHandler();
+	InDialog = false;
 }
 
 std::vector<std::unique_ptr<UiItemBase>> vecNULL;
@@ -161,7 +161,14 @@ public:
 	// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 	Dialog(string_view caption, string_view text, bool error, const std::vector<std::unique_ptr<UiItemBase>> &renderBehind)
 	    : caption_(caption)
+	    , text(text)
+	    , error(error)
 	    , renderBehind_(renderBehind)
+	{
+		InDialog = true;
+	}
+
+	void Activated() override
 	{
 		SDL_SetClipRect(DiabloUiSurface(), nullptr);
 		if (renderBehind_.empty()) {
@@ -209,15 +216,17 @@ public:
 			SDL_Rect rect4 = MakeSdlRect(PANEL_LEFT + 264, UI_OFFSET_Y + 335, SML_BUTTON_WIDTH, SML_BUTTON_HEIGHT);
 			items_.push_back(std::make_unique<UiButton>(&SmlButton, _("OK"), &DialogActionOK, rect4));
 		}
-
-		InDialog = true;
 	}
 
-	~Dialog() override
+	void Deactivated() override
 	{
 		UnloadSmlButtonArt();
 		ArtBackground.Unload();
 		InDialog = false;
+	}
+
+	~Dialog() override
+	{
 	}
 
 	void HandleEvent(SDL_Event &event) override
@@ -231,7 +240,7 @@ public:
 			switch (GetMenuAction(event)) {
 			case MenuAction_BACK:
 			case MenuAction_SELECT:
-				NextMainLoopHandler();
+				Close();
 				break;
 			default:
 				break;
@@ -239,6 +248,9 @@ public:
 			break;
 		}
 		UiHandleEvents(&event);
+
+		if (!InDialog)
+			Close();
 	}
 
 	void Render() override
@@ -253,10 +265,15 @@ public:
 			DrawMouse();
 		}
 		UiFadeIn();
+
+		if (!InDialog)
+			Close();
 	}
 
 private:
 	std::string caption_;
+	std::string text;
+	bool error;
 	std::string wrappedText_;
 	Art dialogArt_;
 	std::vector<std::unique_ptr<UiItemBase>> items_;
@@ -281,7 +298,6 @@ void UiOkDialog(string_view caption, string_view text, bool error, const std::ve
 				Log("{}", SDL_GetError());
 			}
 		}
-		NextMainLoopHandler();
 	}
 
 	if (IsHardwareCursor()) {
@@ -290,7 +306,7 @@ void UiOkDialog(string_view caption, string_view text, bool error, const std::ve
 	}
 
 	InDialog = true;
-	SetMainLoopHandler(std::make_unique<Dialog>(caption, text, error, renderBehind));
+	AddMainLoopHandler(std::make_unique<Dialog>(caption, text, error, renderBehind));
 }
 
 } // namespace

@@ -4,21 +4,97 @@
 #include "control.h"
 #include "main_loop.hpp"
 #include "utils/language.h"
+#include <movie.h>
+#include <DiabloUI/settingsmenu.h>
 
 namespace devilution {
 namespace {
 int mainmenu_attract_time_out; // seconds
 uint32_t dwAttractTicks;
 
+/** The active music track id for the main menu. */
+uint8_t menu_music_track_id = TMUSIC_INTRO;
+
+void RefreshMusic()
+{
+	music_start(menu_music_track_id);
+
+	if (gbIsSpawn && !gbIsHellfire) {
+		return;
+	}
+
+	do {
+		menu_music_track_id++;
+		if (menu_music_track_id == NUM_MUSIC || (!gbIsHellfire && menu_music_track_id > TMUSIC_L4))
+			menu_music_track_id = TMUSIC_L2;
+		if (gbIsSpawn && menu_music_track_id > TMUSIC_L1)
+			menu_music_track_id = TMUSIC_L5;
+	} while (menu_music_track_id == TMUSIC_TOWN || menu_music_track_id == TMUSIC_L1);
+}
+
+bool InitMenu(_selhero_selections type)
+{
+	bool success;
+
+	if (type == SELHERO_PREVIOUS)
+		return true;
+
+	music_stop();
+
+	success = StartGame(type != SELHERO_CONTINUE, type != SELHERO_CONNECT);
+	if (success)
+		RefreshMusic();
+
+	return success;
+}
+
+bool InitSinglePlayerMenu()
+{
+	gbIsMultiplayer = false;
+	return InitMenu(SELHERO_NEW_DUNGEON);
+}
+
+bool InitMultiPlayerMenu()
+{
+	gbIsMultiplayer = true;
+	return InitMenu(SELHERO_CONNECT);
+}
+
+void PlayIntro()
+{
+	music_stop();
+	if (gbIsHellfire)
+		play_movie("gendata\\Hellfire.smk", true);
+	else
+		play_movie("gendata\\diablo1.smk", true);
+	RefreshMusic();
+}
+
+void WaitForButtonSound()
+{
+	SDL_FillRect(DiabloUiSurface(), nullptr, 0x000000);
+	UiFadeIn();
+	SDL_Delay(350); // delay to let button pressed sound finish playing
+}
+
 class MainMenuDialog : public MainLoopHandler {
 public:
-	MainMenuDialog(const char *name, _mainmenu_selections *result, void (*fnSound)(const char *file), int attractTimeOut)
-	    : result_(result)
+	MainMenuDialog(const char *name)
+	    : name(name)
 	{
-		*result_ = MAINMENU_NONE;
-		mainmenu_attract_time_out = attractTimeOut;
+	}
+
+	~MainMenuDialog() override
+	{
+
+		instance_ = nullptr;
+	}
+
+	void Activated() override
+	{
+		mainmenu_attract_time_out = 5;
 		mainmenu_restart_repintro(); // for automatic starts
-		gfnSoundFunction = fnSound;
+		gfnSoundFunction = effects_play_sound;
 
 		listItems_.push_back(std::make_unique<UiListItem>(_("Single Player"), MAINMENU_SINGLE_PLAYER));
 		listItems_.push_back(std::make_unique<UiListItem>(_("Multi Player"), MAINMENU_MULTIPLAYER));
@@ -52,11 +128,13 @@ public:
 		UiInitList(nullptr, UiMainMenuSelect, MainmenuEsc, items_, true);
 	}
 
-	~MainMenuDialog() override
+	void Deactivated() override
 	{
+		UiInitList_clear();
 		ArtBackgroundWidescreen.Unload();
 		ArtBackground.Unload();
-		instance_ = nullptr;
+		listItems_.clear();
+		items_.clear();
 	}
 
 	void HandleEvent(SDL_Event &event) override
@@ -70,17 +148,38 @@ public:
 		UiClearScreen();
 		UiRender();
 		if (SDL_GetTicks() >= dwAttractTicks && (diabdat_mpq || hellfire_mpq)) {
-			*result_ = MAINMENU_ATTRACT_MODE;
-			NextMainLoopHandler();
+			PlayIntro();
 		}
 	}
 
 	void Select(int value)
 	{
-		*result_ = (_mainmenu_selections)listItems_[value]->m_value;
-		if (*result_ != MAINMENU_NONE) {
-			NextMainLoopHandler();
+		auto selected = (_mainmenu_selections)listItems_[value]->m_value;
+		this->Deactivated(); // this line can be removed if everything is converted to MainLoopHandler
+		switch (selected) {
+		case MAINMENU_NONE:
+			break;
+		case MAINMENU_SINGLE_PLAYER:
+			InitSinglePlayerMenu();
+			break;
+		case MAINMENU_MULTIPLAYER:
+			InitMultiPlayerMenu();
+			break;
+		case MAINMENU_SHOW_CREDITS:
+			UiCreditsDialog();
+			break;
+		case MAINMENU_SHOW_SUPPORT:
+			UiSupportDialog();
+			break;
+		case MAINMENU_EXIT_DIABLO:
+			WaitForButtonSound();
+			Close();
+			break;
+		case MAINMENU_SETTINGS:
+			UiSettingsMenu();
+			break;
 		}
+		this->Activated(); // this line can be removed if everything is converted to MainLoopHandler
 	}
 
 	void Esc()
@@ -108,7 +207,8 @@ private:
 
 	std::vector<std::unique_ptr<UiItemBase>> items_;
 	std::vector<std::unique_ptr<UiListItem>> listItems_;
-	_mainmenu_selections *result_;
+
+	const char *name;
 };
 
 MainMenuDialog *MainMenuDialog::instance_ = nullptr;
@@ -120,9 +220,9 @@ void mainmenu_restart_repintro()
 	dwAttractTicks = SDL_GetTicks() + mainmenu_attract_time_out * 1000;
 }
 
-bool UiMainMenuDialog(const char *name, _mainmenu_selections *pdwResult, void (*fnSound)(const char *file), int attractTimeOut)
+bool UiMainMenuDialog(const char *name)
 {
-	SetMainLoopHandler(std::make_unique<MainMenuDialog>(name, pdwResult, fnSound, attractTimeOut));
+	AddMainLoopHandler(std::make_unique<MainMenuDialog>(name));
 	return true;
 }
 

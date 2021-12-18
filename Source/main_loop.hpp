@@ -13,6 +13,14 @@ class MainLoopHandler {
 public:
 	virtual ~MainLoopHandler() = default;
 
+	virtual void Activated()
+	{
+	}
+
+	virtual void Deactivated()
+	{
+	}
+
 	virtual void HandleEvent([[maybe_unused]] SDL_Event &event)
 	{
 	}
@@ -20,19 +28,23 @@ public:
 	virtual void Render()
 	{
 	}
+
+	bool IsClosed()
+	{
+		return isClosed;
+	}
+protected:
+	virtual void Close()
+	{
+		isClosed = true;
+	}
+
+private:
+	bool isClosed = false;
 };
 
 // Replaces the current main loop handler with the given one.
-void SetMainLoopHandler(std::unique_ptr<MainLoopHandler> handler);
-
-// Pushes a main loop handler factory on stack.
-void AddNextMainLoopHandler(std::function<std::unique_ptr<MainLoopHandler>()> factory);
-
-// Adds a sequence of main loop handlers, and invokes them in order.
-void AddMainLoopHandlers(std::initializer_list<std::function<std::unique_ptr<MainLoopHandler>()>> factories);
-
-// Pops the last factory on stack and sets the handler to its result.
-void NextMainLoopHandler();
+void AddMainLoopHandler(std::unique_ptr<MainLoopHandler> handler);
 
 // The function to call once the main loop has finished or on `MainLoopQuit`.
 void SetMainLoopQuitFn(std::function<void(int status)> fn);

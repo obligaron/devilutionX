@@ -13,6 +13,5 @@ namespace devilution {
 extern uint32_t gSaveNumber;
 
 bool mainmenu_select_hero_dialog(GameData *gameData);
-std::unique_ptr<MainLoopHandler> CreateMenuLoopHandler();
 
 } // namespace devilution

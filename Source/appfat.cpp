@@ -63,6 +63,9 @@ class AppFatalMainLoopHandler : public MainLoopHandler {
 public:
 	AppFatalMainLoopHandler()
 	{
+	}
+	void Activated() override
+	{
 		FreeDlg();
 		MainLoopQuit(1);
 	}
@@ -70,14 +73,14 @@ public:
 
 [[noreturn]] void AppFatalMsgBox(const char *pszFmt, va_list va)
 {
-	AddNextMainLoopHandler([]() { return std::make_unique<AppFatalMainLoopHandler>(); });
+	AddMainLoopHandler(std::make_unique<AppFatalMainLoopHandler>());
 	MsgBox(pszFmt, va);
 	DVL_UNREACHABLE;
 }
 
 [[noreturn]] void AppFatalUiErrorOkDialog(const char *caption, const char *text)
 {
-	AddNextMainLoopHandler([]() { return std::make_unique<AppFatalMainLoopHandler>(); });
+	AddMainLoopHandler(std::make_unique<AppFatalMainLoopHandler>());
 	UiErrorOkDialog(caption, text, /*error=*/true);
 	DVL_UNREACHABLE;
 }
@@ -99,7 +102,6 @@ public:
 	if (pszFmt == nullptr) {
 		diablo_quit(1);
 	}
-	DVL_UNREACHABLE;
 }
 
 void DrawDlg(const char *pszFmt, ...)

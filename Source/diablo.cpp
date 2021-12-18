@@ -996,59 +996,26 @@ void DiabloInit()
 	InitItemGFX();
 }
 
-class LogoPlayer : public MainLoopHandler {
-public:
-	LogoPlayer()
-	{
-		if (*sgOptions.StartUp.splash == StartUpSplash::LogoAndTitleDialog) {
-			play_movie("gendata\\logo.smk", true);
-		} else {
-			NextMainLoopHandler();
-		}
-	}
-};
-
-class IntroPlayer
-    : public MainLoopHandler {
-public:
-	IntroPlayer()
-	{
-		auto &intro = gbIsHellfire ? sgOptions.StartUp.hellfireIntro : sgOptions.StartUp.diabloIntro;
-		if (*intro != StartUpIntro::Off) {
-			if (*intro == StartUpIntro::Once)
-				intro.SetValue(StartUpIntro::Off);
-			if (gbIsHellfire)
-				play_movie("gendata\\Hellfire.smk", true);
-			else
-				play_movie("gendata\\diablo1.smk", true);
-		} else {
-			NextMainLoopHandler();
-		}
-	}
-};
-
-class TitlePlayer
-    : public MainLoopHandler {
-public:
-	TitlePlayer()
-	{
-		if (IsAnyOf(*sgOptions.StartUp.splash, StartUpSplash::TitleDialog, StartUpSplash::LogoAndTitleDialog)) {
-			UiTitleDialog();
-		} else {
-			NextMainLoopHandler();
-		}
-	}
-};
-
 void DiabloSplash()
 {
 	if (!gbShowIntro) {
-		NextMainLoopHandler();
 		return;
 	}
-	AddMainLoopHandlers({ []() { return std::make_unique<LogoPlayer>(); },
-	    []() { return std::make_unique<IntroPlayer>(); },
-	    []() { return std::make_unique<TitlePlayer>(); } });
+	if (IsAnyOf(*sgOptions.StartUp.splash, StartUpSplash::TitleDialog, StartUpSplash::LogoAndTitleDialog)) {
+		UiTitleDialog();
+	}
+	auto &intro = gbIsHellfire ? sgOptions.StartUp.hellfireIntro : sgOptions.StartUp.diabloIntro;
+	if (*intro != StartUpIntro::Off) {
+		if (*intro == StartUpIntro::Once)
+			intro.SetValue(StartUpIntro::Off);
+		if (gbIsHellfire)
+			play_movie("gendata\\Hellfire.smk", true);
+		else
+			play_movie("gendata\\diablo1.smk", true);
+	}
+	if (*sgOptions.StartUp.splash == StartUpSplash::LogoAndTitleDialog) {
+		play_movie("gendata\\logo.smk", true);
+	}
 }
 
 void DiabloDeinit()
@@ -1663,7 +1630,7 @@ int DiabloMain(int argc, char **argv)
 	SetMainLoopQuitFn([](int status) {
 		diablo_quit(status);
 	});
-	AddNextMainLoopHandler(CreateMenuLoopHandler);
+	UiMainMenuDialog(gszProductName);
 	DiabloSplash();
 	RunMainLoop();
 

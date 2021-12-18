@@ -42,13 +42,13 @@ public:
 	void HandleEvent(SDL_Event &event) override
 	{
 		if (GetMenuAction(event) != MenuAction_NONE) {
-			NextMainLoopHandler();
+			Close();
 			return;
 		}
 		switch (event.type) {
 		case SDL_KEYDOWN:
 		case SDL_MOUSEBUTTONDOWN:
-			NextMainLoopHandler();
+			Close();
 			return;
 		}
 		UiHandleEvents(&event);
@@ -57,7 +57,7 @@ public:
 	void Render() override
 	{
 		if (SDL_GetTicks() >= timeout_) {
-			NextMainLoopHandler();
+			Close();
 			return;
 		}
 		UiRenderItems(items_);
@@ -74,7 +74,7 @@ private:
 
 void UiTitleDialog()
 {
-	SetMainLoopHandler(std::make_unique<TitleDialog>());
+	AddMainLoopHandler(std::make_unique<TitleDialog>());
 }
 
 } // namespace devilution

@@ -21,10 +21,25 @@ MainLoopHandler *pLastActiveHandler = nullptr;
 std::function<void(int status)> QuitFn;
 int QuitStatus;
 
-bool CheckIfHandlerIsClosed(MainLoopHandler *pHandler)
+bool TryGetNextHandler(MainLoopHandler *&pHandler)
+{
+	pHandler = nullptr;
+	if (Handlers.empty()) {
+		QuitFn(QuitStatus);
+		return false;
+	}
+	pHandler = Handlers[Handlers.size() - 1].get();
+	if (pHandler != pLastActiveHandler) {
+		pHandler->Activated();
+		pLastActiveHandler = pHandler;
+	}
+	return true;
+}
+
+bool CheckIfHandlerIsClosed(MainLoopHandler *&pHandler)
 {
 	if (!pHandler->IsClosed())
-		return false;
+		return true;
 	if (pHandler == pLastActiveHandler) {
 		pLastActiveHandler->Deactivated();
 		pLastActiveHandler = nullptr;
@@ -32,45 +47,35 @@ bool CheckIfHandlerIsClosed(MainLoopHandler *pHandler)
 	Handlers.erase(std::find_if(Handlers.begin(), Handlers.end(), [&](const std::unique_ptr<MainLoopHandler> &handler) {
 		return handler.get() == pHandler;
 	}));
-	return true;
+	return TryGetNextHandler(pHandler);
 }
 
 // Runs an iteration of the main loop.
 // Return true if the loop should continue.
 bool RunMainLoopIteration()
 {
-	if (Handlers.empty()) {
-		QuitFn(QuitStatus);
+	MainLoopHandler *pHandler = nullptr;
+	if (!TryGetNextHandler(pHandler))
 		return false;
-	}
-	auto *pHandler = Handlers[Handlers.size() - 1].get();
-
-	if (pHandler != pLastActiveHandler) {
-		pHandler->Activated();
-		pLastActiveHandler = pHandler;
-	}
 
 	SDL_Event event;
 	while (SDL_PollEvent(&event) != 0) {
 		if (event.type == SDL_QUIT) {
+			if (pLastActiveHandler != nullptr) {
+				pLastActiveHandler->Deactivated();
+				pLastActiveHandler = nullptr;
+			}
 			Handlers.clear();
-			pHandler = nullptr;
-		}
-		if (pHandler == nullptr) {
 			QuitFn(QuitStatus);
 			return false;
 		}
 		pHandler->HandleEvent(event);
-		if (CheckIfHandlerIsClosed(pHandler))
-			return true;
+		if (!CheckIfHandlerIsClosed(pHandler))
+			return false;
 	}
 	pHandler->Render();
-	if (CheckIfHandlerIsClosed(pHandler))
-		return true;
-	if (pHandler == nullptr) {
-		QuitFn(QuitStatus);
+	if (!CheckIfHandlerIsClosed(pHandler))
 		return false;
-	}
 	return true;
 }
 

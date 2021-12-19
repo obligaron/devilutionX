@@ -25,7 +25,10 @@ bool CheckIfHandlerIsClosed(MainLoopHandler *pHandler)
 {
 	if (!pHandler->IsClosed())
 		return false;
-	pHandler->Deactivated();
+	if (pHandler == pLastActiveHandler) {
+		pLastActiveHandler->Deactivated();
+		pLastActiveHandler = nullptr;
+	}
 	Handlers.erase(std::find_if(Handlers.begin(), Handlers.end(), [&](const std::unique_ptr<MainLoopHandler> &handler) {
 		return handler.get() == pHandler;
 	}));
@@ -40,8 +43,7 @@ bool RunMainLoopIteration()
 		QuitFn(QuitStatus);
 		return false;
 	}
-	size_t handlerIndex = Handlers.size() - 1;
-	auto *pHandler = Handlers.at(handlerIndex).get();
+	auto *pHandler = Handlers[Handlers.size() - 1].get();
 
 	if (pHandler != pLastActiveHandler) {
 		pHandler->Activated();

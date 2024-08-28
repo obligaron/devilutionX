@@ -27,6 +27,12 @@ SfxID sfxdnum = SfxID::None;
 
 namespace {
 
+struct TSFX {
+	uint8_t bFlags;
+	std::string pszName;
+	std::unique_ptr<TSnd> pSnd;
+};
+
 #ifndef DISABLE_STREAMING_SOUNDS
 constexpr bool AllowStreaming = true;
 #else

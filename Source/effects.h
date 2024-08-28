@@ -9,7 +9,7 @@
 #include <memory>
 #include <string>
 
-#include "engine/sound.h"
+#include "engine/point.hpp"
 
 namespace devilution {
 
@@ -1045,12 +1045,6 @@ enum sfx_flag : uint8_t {
 	sfx_SORCERER = 1 << 6,
 	sfx_HELLFIRE = 1 << 7,
 	// clang-format on
-};
-
-struct TSFX {
-	uint8_t bFlags;
-	std::string pszName;
-	std::unique_ptr<TSnd> pSnd;
 };
 
 extern int sfxdelay;

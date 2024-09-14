@@ -468,3 +468,14 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_link_libraries(libdevilutionx PUBLIC c++fs)
   endif()
 endif()
+
+target_precompile_headers(libdevilutionx PRIVATE
+  appfat.h
+  player.h
+  items.h
+  monster.h
+  engine/sound.h
+  engine/displacement.hpp
+  DiabloUI/diabloui.h
+  options.h
+)

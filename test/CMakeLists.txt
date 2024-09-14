@@ -9,6 +9,18 @@ set_target_properties(libdevilutionx_so PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON
 add_library(test_main STATIC main.cpp)
 target_link_libraries(test_main PUBLIC libdevilutionx_so GTest::gtest GTest::gmock)
 
+target_precompile_headers(test_main PUBLIC
+  <gtest/gtest.h>
+  <appfat.h>
+  <player.h>
+  <items.h>
+  <monster.h>
+  <engine/sound.h>
+  <engine/displacement.hpp>
+  <DiabloUI/diabloui.h>
+  <options.h>
+)
+
 set(tests
   animationinfo_test
   appfat_test
@@ -68,6 +80,7 @@ endforeach()
 
 foreach(test_target ${tests})
   target_link_libraries(${test_target} PRIVATE test_main)
+  target_precompile_headers(${test_target} REUSE_FROM test_main)
 endforeach()
 
 foreach(test_target ${standalone_tests})

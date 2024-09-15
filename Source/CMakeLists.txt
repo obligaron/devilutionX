@@ -199,8 +199,10 @@ set(_optimize_in_debug_srcs
   utils/pcx_to_clx.cpp)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   set_source_files_properties(${_optimize_in_debug_srcs} PROPERTIES COMPILE_OPTIONS "-O2;--param=max-vartrack-size=900000000")
+  set_source_files_properties(${_optimize_in_debug_srcs} PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   set_source_files_properties(${_optimize_in_debug_srcs} PROPERTIES COMPILE_OPTIONS "-O2")
+  set_source_files_properties(${_optimize_in_debug_srcs} PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE)
 endif()
 
 if(SUPPORTS_MPQ)

@@ -270,16 +270,17 @@ Make sure to install the workload `Desktop development with C++` and the individ
 
 Install [Git for Windows](https://gitforwindows.org/)
 
-Run the following commands in Command Prompt or Powershell
+Run the following commands in Powershell
 
-~~~ bat
+~~~ powershell
 git clone https://github.com/microsoft/vcpkg
 cd vcpkg
-bootstrap-vcpkg.bat
-vcpkg integrate install
+.\bootstrap-vcpkg.bat
+[Environment]::SetEnvironmentVariable("VCPKG_ROOT", $PWD.Path, "User")
+$env:VCPKG_ROOT = $PWD.Path
 ~~~
 
-If you need additional instructions for vcpkg you can find the documentation [here](https://github.com/microsoft/vcpkg#quick-start-windows).
+If you need additional instructions for vcpkg you can find the documentation [here](https://learn.microsoft.com/de-de/vcpkg/get_started/get-started).
 
 ### If you want to build the devilutionX.mpq File (optional)
 

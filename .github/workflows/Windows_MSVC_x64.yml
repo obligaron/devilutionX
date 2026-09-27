@@ -19,6 +19,7 @@ permissions:
 
 env:
   VCPKG_FEATURE_FLAGS: dependencygraph
+  VCPKG_DEFAULT_BINARY_CACHE: "${{ github.workspace }}/vcpkg_cache"
   VCPKG_BINARY_SOURCES: "clear;default,readwrite"
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -38,6 +39,12 @@ jobs:
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2
 
+    - name: vcpkg Binary Cache wiederherstellen/sichern
+      uses: actions/cache@v6
+      with:
+        path: ${{ github.workspace }}/vcpkg_cache
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+
     - name: Install latest CMake
       uses: lukka/get-cmake@latest
 
@@ -45,7 +52,6 @@ jobs:
       uses: lukka/run-vcpkg@v11.6
       with:
         vcpkgGitCommitId: '40f3c709db80acf154ac4b17a1f83c564ebd022e'
-        doNotCache: false
 
     - name: Fetch test data
       run: |

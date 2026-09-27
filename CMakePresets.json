@@ -118,6 +118,10 @@
 				"DISABLE_LTO": {
 					"type": "BOOL",
 					"value": "ON"
+				},
+				"CMAKE_EXE_LINKER_FLAGS": {
+					"type": "STRING",
+					"value": "/STACK:8388608"
 				}
 			}
 		},

@@ -97,6 +97,10 @@
 				"CPACK": {
 					"type": "BOOL",
 					"value": "OFF"
+				},
+				"DISABLE_LTO": {
+					"type": "BOOL",
+					"value": "ON"
 				}
 			}
 		},
@@ -110,6 +114,10 @@
 				"CPACK": {
 					"type": "BOOL",
 					"value": "OFF"
+				},
+				"DISABLE_LTO": {
+					"type": "BOOL",
+					"value": "ON"
 				}
 			}
 		},
@@ -132,6 +140,10 @@
 				"CPACK": {
 					"type": "BOOL",
 					"value": "OFF"
+				},
+				"DISABLE_LTO": {
+					"type": "BOOL",
+					"value": "ON"
 				}
 			}
 		},

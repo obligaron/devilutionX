@@ -42,7 +42,7 @@ jobs:
       uses: actions/cache@v6
       with:
         path: ${{ github.workspace }}/vcpkg_cache
-        key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+        key: ${{ runner.os }}-vcpkg-msvc-x64-${{ hashFiles('vcpkg.json') }}
 
     - name: Install latest CMake
       uses: lukka/get-cmake@latest

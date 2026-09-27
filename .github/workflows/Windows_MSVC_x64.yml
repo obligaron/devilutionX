@@ -19,7 +19,7 @@ permissions:
 
 env:
   VCPKG_FEATURE_FLAGS: dependencygraph
-  VCPKG_DEFAULT_BINARY_CACHE: "${{ github.workspace }}/vcpkg_cache"
+  VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg_cache,readwrite"
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 concurrency:

@@ -20,7 +20,6 @@ permissions:
 env:
   VCPKG_FEATURE_FLAGS: dependencygraph
   VCPKG_DEFAULT_BINARY_CACHE: "${{ github.workspace }}/vcpkg_cache"
-  VCPKG_BINARY_SOURCES: "clear;default,readwrite"
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 concurrency:
@@ -39,7 +38,7 @@ jobs:
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2
 
-    - name: vcpkg Binary Cache wiederherstellen/sichern
+    - name: cache vcpkg binary cache
       uses: actions/cache@v6
       with:
         path: ${{ github.workspace }}/vcpkg_cache

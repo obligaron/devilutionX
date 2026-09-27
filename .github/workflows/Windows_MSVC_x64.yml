@@ -56,7 +56,11 @@ jobs:
         configurePreset: 'msvc-x64-RelWithDebInfo'
         buildPreset: 'msvc-x64-RelWithDebInfo'
         testPreset: 'msvc-x64-RelWithDebInfo'
-        configurePresetAdditionalArgs: '-DCMAKE_EXE_LINKER_FLAGS="/STACK:8388608" -DDISABLE_LTO=ON'
+        configurePresetAdditionalArgs: |
+          [
+            "-DCMAKE_EXE_LINKER_FLAGS=/STACK:8388608",
+            "-DDISABLE_LTO=ON"
+          ]
 
     - name: Upload-Package
       if: ${{ !env.ACT }}

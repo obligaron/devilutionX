@@ -97,10 +97,6 @@
 				"CPACK": {
 					"type": "BOOL",
 					"value": "OFF"
-				},
-				"DISABLE_LTO": {
-					"type": "BOOL",
-					"value": "ON"
 				}
 			}
 		},
@@ -114,14 +110,6 @@
 				"CPACK": {
 					"type": "BOOL",
 					"value": "OFF"
-				},
-				"DISABLE_LTO": {
-					"type": "BOOL",
-					"value": "ON"
-				},
-				"CMAKE_EXE_LINKER_FLAGS": {
-					"type": "STRING",
-					"value": "/STACK:8388608"
 				}
 			}
 		},
@@ -144,10 +132,6 @@
 				"CPACK": {
 					"type": "BOOL",
 					"value": "OFF"
-				},
-				"DISABLE_LTO": {
-					"type": "BOOL",
-					"value": "ON"
 				}
 			}
 		},

@@ -219,12 +219,6 @@ if(MSVC AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT DISABLE_LTO)
   set(BUILD_TESTING OFF)
 endif()
 
-if(MSVC)
-    # Erzwingt 8 MB Stack-Speicher für ALLE Windows MSVC-Builds, egal welches Preset
-    string(APPEND CMAKE_EXE_LINKER_FLAGS " /STACK:8388608")
-    message(STATUS "Erzwungener Windows-Linker-Stack: 8MB aktiv")
-endif()
-
 # Note: `CMAKE_CROSSCOMPILING` is only available after the `project` call.
 if(CMAKE_CROSSCOMPILING)
   set(BUILD_TESTING OFF)

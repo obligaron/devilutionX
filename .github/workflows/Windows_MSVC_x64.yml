@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - ccachekey
     paths-ignore:
       - '*.md'
       - 'docs/**'
@@ -36,6 +37,8 @@ jobs:
 
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ${{ github.workflow }}
 
     - name: cache vcpkg binary cache
       uses: actions/cache@v6

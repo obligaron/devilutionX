@@ -308,11 +308,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-  # u8path() function is deprecated but there is no sensible alternative and it might even get un-deprecated.
-  add_definitions(-D_SILENCE_CXX20_U8PATH_DEPRECATION_WARNING)
   if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.25")
-    # This enables Edit & Continue support, see https://learn.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio#edit-and-continue-for-cmake-projects
-    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug>:EditAndContinue>") # Sets /ZI compiler option, see https://cmake.org/cmake/help/latest/variable/CMAKE_MSVC_DEBUG_INFORMATION_FORMAT.html
+    # Configures PDB support, see https://cmake.org/cmake/help/latest/variable/CMAKE_MSVC_DEBUG_INFORMATION_FORMAT.html
+    # Enable Edit & Continue support (/ZI compiler option) in Debug, see https://learn.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio#edit-and-continue-for-cmake-projects
+    # Enable Embedded (/Z7 compiler option) in RelWithDebInfo to improve CCache hits, see https://github.com/ccache/ccache/issues/1040
+    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug>:EditAndContinue>$<$<CONFIG:RelWithDebInfo>:Embedded>")
     add_link_options("$<$<CONFIG:Debug>:/INCREMENTAL>")
   endif()
 endif()

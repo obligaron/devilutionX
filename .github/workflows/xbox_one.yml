@@ -57,10 +57,21 @@ jobs:
         Add-Content $env:GITHUB_PATH "$((Get-Item tools-gettext).FullName)\bin"
 
     - name: Build
-      shell: cmd
+      shell: powershell
       run: |
-        cd ${{ github.workspace }}\Packaging\xbox-one
-        build.bat
+        # 1. Erstelle das Verzeichnis für den Wrapper
+        New-Item -ItemType Directory -Force -Path "${{ github.workspace }}\ccache-bin"
+        
+        # 2. Ermittle den echten ccache-Pfad über PowerShell (zuverlässiger als 'where' in CMD)
+        $ccachePath = (Get-Command ccache.exe -ErrorAction Stop).Source
+        Write-Host "ccache gefunden unter: $ccachePath"
+        
+        # 3. Kopiere die ccache.exe als cl.exe in unseren Wrapper-Ordner
+        Copy-Item -Path $ccachePath -Destination "${{ github.workspace }}\ccache-bin\cl.exe" -Force
+        
+        # 4. Starte die build.bat mit den korrekten MSBuild-Injektionen über CMD-Kontext
+        cd "${{ github.workspace }}\Packaging\xbox-one"
+        cmd.exe /c "build.bat /p:CLToolPath=`"${{ github.workspace }}\ccache-bin`" /p:CLToolExe=cl.exe /p:TrackCommandLine=false"
 
     - name: Copy artifacts to package directory
       run: >
